@@ -281,7 +281,93 @@ img {
 }
 
 
-/* 8. Booking Banner */
+/* 8. Popular Travel Packages */
+
+.packages {
+    background-color: #fafafa;
+}
+
+.package-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 25px;
+}
+
+.package-card {
+    display: flex;
+    background-color: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 3px 15px rgba(0, 0, 0, 0.08);
+    transition: transform 0.3s;
+}
+
+.package-card:hover {
+    transform: translateY(-5px);
+}
+
+.package-card img {
+    width: 40%;
+    min-height: 220px;
+    object-fit: cover;
+}
+
+.package-info {
+    flex: 1;
+    padding: 20px;
+}
+
+.package-info h3 {
+    color: #183b56;
+    font-size: 18px;
+}
+
+.package-duration {
+    color: #df8d35;
+    font-size: 13px;
+    font-weight: bold;
+    margin: 5px 0 10px;
+}
+
+.package-description {
+    color: #777;
+    font-size: 14px;
+    margin-bottom: 18px;
+}
+
+.package-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.price-label {
+    color: #777;
+    font-size: 11px;
+}
+
+.package-price {
+    color: #e99a43;
+    font-size: 21px !important;
+}
+
+.package-btn {
+    background-color: #183b56;
+    color: white;
+    padding: 9px 13px;
+    border-radius: 5px;
+    font-size: 12px;
+    font-weight: bold;
+    white-space: nowrap;
+    transition: 0.3s;
+}
+
+.package-btn:hover {
+    background-color: #285b7c;
+}
+
+/* 9. Booking Banner */
 
 .booking-banner {
     background-color: #e99a43;
@@ -301,7 +387,7 @@ img {
 }
 
 
-/* 9. Footer */
+/* 10. Footer */
 
 .footer {
     background-color: #142f43;
@@ -352,7 +438,7 @@ img {
 }
 
 
-/* 10. Responsive Design */
+/* 11. Responsive Design */
 
 @media (max-width: 900px) {
 
@@ -366,6 +452,9 @@ img {
 
     .hero h1 {
         font-size: 42px;
+    }
+    .package-container {
+    grid-template-columns: 1fr;
     }
 }
 
@@ -395,6 +484,18 @@ img {
     .destination-container {
         grid-template-columns: 1fr;
     }
+    .package-card {
+    flex-direction: column;
+    }
+
+    .package-card img {
+        width: 100%;
+        height: 200px;
+    }
+
+    .package-info {
+        padding: 18px;
+    }
 
     .booking-banner {
         flex-direction: column;
@@ -409,3 +510,64 @@ img {
         padding: 55px 7%;
     }
 }
+
+
+/* 11. Sticky Booking Bar */
+
+.sticky-booking {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+
+    background-color: #e99a43;
+    color: white;
+
+    padding: 12px 7%;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    box-shadow: 0 -3px 12px rgba(0, 0, 0, 0.12);
+
+    z-index: 1000;
+
+    /* Hidden initially */
+    transform: translateY(100%);
+    transition: transform 0.3s ease;
+}
+
+/* Show the bar */
+.sticky-booking.show {
+    transform: translateY(0);
+}
+
+.sticky-booking-text h3 {
+    font-size: 18px;
+}
+
+.sticky-booking-text p {
+    font-size: 13px;
+}
+
+@media (max-width: 600px) {
+
+    .sticky-booking {
+        padding: 12px 5%;
+    }
+
+    .sticky-booking-text h3 {
+        font-size: 15px;
+    }
+
+    .sticky-booking-text p {
+        font-size: 11px;
+    }
+
+    .sticky-booking .btn {
+        padding: 10px 13px;
+        font-size: 12px;
+    }
+}
+

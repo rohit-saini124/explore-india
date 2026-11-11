@@ -1,15 +1,12 @@
 
-// Get the booking form
+// Getting the elements using javascript
+
 const bookingForm = document.getElementById("booking-form");
-
-// Get the message element
 const formMessage = document.getElementById("form-message");
-
-// Get the travel date input
 const travelDate = document.getElementById("travel-date");
 
 
-// Set today's date as the minimum travel date
+// Set today's date for minimum date
 const today = new Date();
 
 const year = today.getFullYear();
@@ -19,7 +16,7 @@ const day = String(today.getDate()).padStart(2, "0");
 travelDate.min = `${year}-${month}-${day}`;
 
 
-// Run this code when the form is submitted
+// when we click submit
 bookingForm.addEventListener("submit", function(event) {
 
     // Prevent the page from reloading
@@ -27,9 +24,7 @@ bookingForm.addEventListener("submit", function(event) {
 
     // Check whether all input values are valid
     if (!bookingForm.checkValidity()) {
-
         bookingForm.reportValidity();
-
         return;
     }
 

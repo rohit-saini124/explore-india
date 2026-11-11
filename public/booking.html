@@ -188,6 +188,21 @@
                     </select>
                 </div>
 
+                <!-- Preferred Package -->
+                <div class="form-group">
+                    <label for="package">Preferred Travel Package</label>
+
+                    <select id="package" name="package">
+                        <option value="">Select a package</option>
+                        <option value="Manali Mountain Escape">Manali Mountain Escape</option>
+                        <option value="Kerala Backwater Tour">Kerala Backwater Tour</option>
+                        <option value="Royal Rajasthan Tour">Royal Rajasthan Tour</option>
+                        <option value="Goa Beach Holiday">Goa Beach Holiday</option>
+                        <option value="Not Decided">Not Decided Yet</option>
+                    </select>
+                </div>
+
+
 
                 <!-- Date and People -->
                 <div class="form-row">
@@ -201,6 +216,48 @@
                             name="travel_date"
                             required
                         >
+                    </div>
+
+                    <!-- Budget and Trip Duration -->
+                    <div class="form-row">
+
+                        <div class="form-group">
+                            <label for="budget">Approximate Budget (per person)</label>
+
+                            <select id="budget" name="budget">
+                                <option value="">Select your budget</option>
+                                <option value="Below 5000">Below ₹5,000</option>
+                                <option value="5000-10000">₹5,000 - ₹10,000</option>
+                                <option value="10000-20000">₹10,000 - ₹20,000</option>
+                                <option value="20000-50000">₹20,000 - ₹50,000</option>
+                                <option value="Above 50000">Above ₹50,000</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="duration">Trip Duration</label>
+
+                            <select id="duration" name="duration">
+                                <option value="">Select duration</option>
+                                <option value="1-3 days">1 - 3 Days</option>
+                                <option value="4-6 days">4 - 6 Days</option>
+                                <option value="7-10 days">7 - 10 Days</option>
+                                <option value="Above 10 days">Above 10 Days</option>
+                            </select>
+                        </div>
+
+                    </div>
+
+                    <!-- Preferred Contact Method -->
+                    <div class="form-group">
+                        <label for="contact-method">Preferred Contact Method</label>
+
+                        <select id="contact-method" name="contact_method">
+                            <option value="">Select contact method</option>
+                            <option value="Phone Call">Phone Call</option>
+                            <option value="WhatsApp">WhatsApp</option>
+                            <option value="Email">Email</option>
+                        </select>
                     </div>
 
 

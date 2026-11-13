@@ -1,11 +1,11 @@
 const express = require('express');
 const db = require('../database');
 const router = express.Router();
- 
+
 // GET /api/packages?category=&search=&sort=
 router.get('/', (req, res) => {
   const { category, search, sort } = req.query;
-  let sql = 'SELECT * FROM packages WHERE 1=1';
+  let sql = 'SELECT * FROM tour_packages WHERE 1=1';
   const params = [];
   if (category && category !== 'All') { sql += ' AND category = ?'; params.push(category); }
   if (search) {
@@ -16,12 +16,11 @@ router.get('/', (req, res) => {
   sql += ' ORDER BY ' + order;
   res.json(db.prepare(sql).all(...params));
 });
- 
+
 router.get('/:id', (req, res) => {
-  const row = db.prepare('SELECT * FROM packages WHERE id = ?').get(req.params.id);
+  const row = db.prepare('SELECT * FROM tour_packages WHERE id = ?').get(req.params.id);
   if (!row) return res.status(404).json({ error: 'Package not found' });
   res.json(row);
 });
- 
+
 module.exports = router;
- 

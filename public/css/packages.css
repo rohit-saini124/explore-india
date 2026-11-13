@@ -1,91 +1,374 @@
 
-.package-hero {
-    background: linear-gradient(90deg, #172554, #2563eb);
+
+.page-hero {
+    background-image:
+        linear-gradient(rgba(0, 0, 0, .5), rgba(0, 0, 0, .5)),
+        url("../images/taj-mahal.jpg");
+    background-size: cover;
+    background-position: center;
     color: white;
     text-align: center;
-    padding: 80px 20px;
+    padding: 80px 7%;
 }
 
-.package-hero h1 {
-    font-size: 38px;
-    margin-bottom: 15px;
-}
-
-.package-hero p {
-    font-size: 17px;
-}
-
-.all-packages {
-    padding: 50px 7%;
-}
-
-.package-heading {
-    text-align: center;
-    margin-bottom: 35px;
-}
-
-.package-heading h2 {
-    font-size: 30px;
+.page-hero .hero-subtitle {
+    color: #ffc477;
+    font-weight: bold;
+    letter-spacing: 3px;
     margin-bottom: 10px;
 }
 
-.package-list {
+.page-hero h1 {
+    font-size: 46px;
+    margin-bottom: 10px;
+}
+
+
+.pk-section {
+    background: #fafafa;
+}
+
+/* Toolbar */
+
+.pk-toolbar {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.pk-toolbar input,
+.pk-toolbar select {
+    padding: 12px 16px;
+    border: 1px solid #dde3e8;
+    border-radius: 6px;
+    font-size: 15px;
+    font-family: inherit;
+    color: #183b56;
+    background: white;
+}
+
+.pk-toolbar input {
+    flex: 1;
+    min-width: 220px;
+}
+
+.pk-toolbar input:focus,
+.pk-toolbar select:focus {
+    outline: 2px solid #e99a43;
+    border-color: transparent;
+}
+
+
+.chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.chip {
+    padding: 8px 18px;
+    border-radius: 30px;
+    border: 2px solid #183b56;
+    background: white;
+    color: #183b56;
+    font-weight: bold;
+    font-size: 14px;
+    cursor: pointer;
+    transition: .3s;
+}
+
+.chip:hover {
+    background: #eef3f7;
+}
+
+.chip.active {
+    background: #183b56;
+    color: white;
+}
+
+
+
+.result-count {
+    color: #777;
+    font-size: 14px;
+    margin-bottom: 20px;
+}
+
+
+
+.pk-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 25px;
 }
 
-.travel-card {
-    display: flex;
+
+
+.pk-card {
     background: white;
     border-radius: 10px;
     overflow: hidden;
-    box-shadow: 0 3px 12px #ddd;
+    cursor: pointer;
+    box-shadow: 0 3px 15px rgba(0, 0, 0, .08);
+    transition: transform .3s, box-shadow .3s;
+    display: flex;
+    flex-direction: column;
+    animation: fadeUp .5s ease both;
 }
 
-.travel-card img {
-    width: 45%;
+.pk-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, .14);
+}
+
+
+
+.pk-img {
+    position: relative;
+    width: 100%;
+}
+
+.pk-img img {
+    width: 100%;
+    height: 200px;
     object-fit: cover;
+    display: block;
 }
 
-.travel-info {
-    padding: 22px;
-}
 
-.travel-info h3 {
-    margin-bottom: 12px;
-}
 
-.travel-info p {
-    margin-bottom: 12px;
-    color: #666;
-}
-
-.travel-btn {
-    display: inline-block;
-    margin-top: 10px;
-    padding: 10px 18px;
-    background: #f59e0b;
+.pk-tag {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: #183b56;
     color: white;
-    text-decoration: none;
-    border-radius: 5px;
+    font-size: 11px;
+    font-weight: bold;
+    padding: 5px 10px;
+    border-radius: 20px;
 }
 
-.travel-btn:hover {
-    background: #d97706;
+/* Package Rating */
+
+.pk-star {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: #e99a43;
+    color: white;
+    font-size: 11px;
+    font-weight: bold;
+    padding: 5px 10px;
+    border-radius: 20px;
 }
 
-@media (max-width: 750px) {
-    .package-list {
+
+
+.pk-card .package-info {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    padding: 20px;
+}
+
+.pk-place {
+    color: #777;
+    font-size: 13px;
+    margin-top: 2px;
+}
+
+.pk-card .package-description {
+    flex: 1;
+}
+
+@keyframes fadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+
+.empty {
+    text-align: center;
+    color: #777;
+    padding: 50px 0;
+    font-size: 17px;
+}
+
+
+.modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 25, 40, .65);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 2000;
+    overflow-y: auto;
+}
+
+.modal[hidden] {
+    display: none;
+}
+
+.modal-box {
+    background: white;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 560px;
+    position: relative;
+    overflow: hidden;
+    animation: pop .25s ease;
+}
+
+@keyframes pop {
+    from {
+        opacity: 0;
+        transform: scale(.92);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+
+
+.modal-close {
+    position: absolute;
+    top: 10px;
+    right: 14px;
+    width: 34px;
+    height: 34px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .9);
+    font-size: 24px;
+    cursor: pointer;
+    color: #183b56;
+    z-index: 2;
+}
+
+/* Modal Image */
+
+#m-img {
+    width: 100%;
+    height: 240px;
+    object-fit: cover;
+    display: block;
+}
+
+
+.modal-body {
+    padding: 24px;
+}
+
+.modal-body h2 {
+    color: #183b56;
+    margin: 4px 0;
+}
+
+.m-place {
+    color: #777;
+    font-size: 14px;
+    margin-bottom: 12px;
+}
+
+.modal-body h4 {
+    color: #183b56;
+    margin: 16px 0 8px;
+}
+
+
+
+.m-list {
+    list-style: none;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    font-size: 14px;
+    padding: 0;
+    margin: 0;
+}
+
+.m-list li::before {
+    content: "✓ ";
+    color: #e99a43;
+    font-weight: bold;
+}
+
+
+
+.m-bottom {
+    margin-top: 22px;
+    padding-top: 16px;
+    border-top: 1px solid #eee;
+}
+
+
+.pk-card:focus-visible,
+.chip:focus-visible,
+.modal-close:focus-visible {
+    outline: 3px solid #e99a43;
+    outline-offset: 3px;
+}
+
+
+@media (max-width: 900px) {
+
+    .pk-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .page-hero h1 {
+        font-size: 38px;
+    }
+}
+
+
+@media (max-width: 600px) {
+
+    .pk-grid {
         grid-template-columns: 1fr;
     }
 
-    .travel-card {
+    .pk-toolbar {
         flex-direction: column;
     }
 
-    .travel-card img {
+    .pk-toolbar input,
+    .pk-toolbar select {
         width: 100%;
-        height: 200px;
+    }
+
+    .m-list {
+        grid-template-columns: 1fr;
+    }
+
+    .page-hero {
+        padding: 55px 7%;
+    }
+
+    .page-hero h1 {
+        font-size: 32px;
+    }
+
+    .modal {
+        padding: 12px;
+    }
+
+    .modal-body {
+        padding: 18px;
     }
 }

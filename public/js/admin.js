@@ -1,67 +1,157 @@
-const enquiries = [
-  {name:'Rahul',email:'rahul@gmail.com',destination:'Goa',date:'2026-11-10',travellers:2,status:'Pending'},
-  {name:'Priya',email:'priya@gmail.com',destination:'Manali',date:'2026-11-09',travellers:4,status:'Confirmed'},
-  {name:'Aman',email:'aman@gmail.com',destination:'Kerala',date:'2026-11-08',travellers:3,status:'Contacted'},
-  {name:'Sneha',email:'sneha@gmail.com',destination:'Jaipur',date:'2026-11-07',travellers:2,status:'Pending'}
-];
-const destinations = ['Goa','Manali','Kerala','Jaipur','Varanasi','Udaipur'];
-const packages = [{name:'Manali Mountain Escape',duration:'5 Days / 4 Nights'},{name:'Kerala Backwater Tour',duration:'6 Days / 5 Nights'},{name:'Goa Beach Holiday',duration:'4 Days / 3 Nights'}];
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const inr = n => '₹' + Number(n).toLocaleString('en-IN');
 
-document.getElementById('todayDate').textContent = new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+async function api(url, method = 'GET', body) {
+    const res = await fetch(url, {
+        method, headers: { 'Content-Type': 'application/json' },
+        body: body ? JSON.stringify(body) : undefined
+    });
+    const data = await res.json().catch(() => ({ error: `Server error (${res.status}). Open it via http://localhost:3000 and check the terminal.` }));
+    if (res.status === 401 && $('pk-body')) { location.href = 'admin-login.html'; }
+    if (!res.ok) throw new Error(data.error || ('Request failed (HTTP ' + res.status + ')'));
+    return data;
+}
 
-function statusTag(status) {
-  return `<span class="status ${status}">${status}</span>`;
-}
-function renderRecent() {
-  document.getElementById('recentTable').innerHTML = enquiries.slice(0,4).map(e =>
-    `<tr><td>${e.name}</td><td>${e.destination}</td><td>${e.date}</td><td>${e.travellers}</td><td>${statusTag(e.status)}</td></tr>`
-  ).join('');
-}
-function renderEnquiries(list=enquiries) {
-  document.getElementById('enquiryTable').innerHTML = list.map((e,i) =>
-    `<tr><td>${e.name}</td><td>${e.email}</td><td>${e.destination}</td><td>${e.date}</td><td>${e.travellers}</td><td>${statusTag(e.status)}</td><td><select data-status="${enquiries.indexOf(e)}"><option ${e.status==='Pending'?'selected':''}>Pending</option><option ${e.status==='Contacted'?'selected':''}>Contacted</option><option ${e.status==='Confirmed'?'selected':''}>Confirmed</option></select></td></tr>`
-  ).join('');
-}
-function renderCards() {
-  document.getElementById('destinationGrid').innerHTML = destinations.map(d => `<article class="simple-card"><h3>${d}</h3><p>Listed travel destination</p></article>`).join('');
-  document.getElementById('packageGrid').innerHTML = packages.map(p => `<article class="simple-card"><h3>${p.name}</h3><p>Duration: ${p.duration}</p></article>`).join('');
-}
-function updateStats() {
-  document.getElementById('totalCount').textContent = enquiries.length;
-  document.getElementById('pendingCount').textContent = enquiries.filter(e=>e.status==='Pending').length;
-  document.getElementById('confirmedCount').textContent = enquiries.filter(e=>e.status==='Confirmed').length;
-}
-function showSection(id) {
-  document.querySelectorAll('.page-section').forEach(s=>s.classList.toggle('active-section',s.id===id));
-  document.querySelectorAll('.nav-link[data-section]').forEach(b=>b.classList.toggle('active',b.dataset.section===id));
-  document.getElementById('pageTitle').textContent = id.charAt(0).toUpperCase()+id.slice(1);
-  document.getElementById('sidebar').classList.remove('open');
-}
-document.querySelectorAll('.nav-link[data-section]').forEach(b=>b.addEventListener('click',()=>showSection(b.dataset.section)));
-document.querySelectorAll('[data-open]').forEach(b=>b.addEventListener('click',()=>showSection(b.dataset.open)));
-document.getElementById('enquiryTable').addEventListener('change',e=>{
-  if(e.target.matches('select[data-status]')) {
-    enquiries[Number(e.target.dataset.status)].status=e.target.value;
-    renderEnquiries(); renderRecent(); updateStats();
-  }
-});
-document.getElementById('searchEnquiries').addEventListener('input',e=>{
-  const q=e.target.value.toLowerCase();
-  renderEnquiries(enquiries.filter(x=>[x.name,x.email,x.destination,x.status].some(v=>v.toLowerCase().includes(q))));
-});
-document.getElementById('addDestination').addEventListener('click',()=>{
-  const name=prompt('Enter destination name:');
-  if(name && name.trim()){destinations.push(name.trim());renderCards();}
-});
-document.getElementById('addPackage').addEventListener('click',()=>{
-  const name=prompt('Enter package name:');
-  if(name && name.trim()){const duration=prompt('Enter duration (example: 5 Days / 4 Nights):')||'Not set';packages.push({name:name.trim(),duration});renderCards();}
-});
-document.getElementById('saveSettings').addEventListener('click',()=>document.getElementById('settingsMessage').textContent='Demo settings saved in this page.');
-document.getElementById('logoutBtn').addEventListener('click',()=>{
-  sessionStorage.removeItem('exploreIndiaAdminDemo');
-  window.location.href='admin-login.html';
-});
-document.getElementById('menuBtn').addEventListener('click',()=>document.getElementById('sidebar').classList.toggle('open'));
+/* ================= LOGIN PAGE ================= */
+if ($('login-form')) {
+    api('/api/admin/check').then(d => { if (d.loggedIn) location.href = 'admin-dashboard.html'; }).catch(() => {});
 
-renderRecent(); renderEnquiries(); renderCards(); updateStats();
+    $('toggle-pw').addEventListener('click', () => {
+        $('password').type = $('password').type === 'password' ? 'text' : 'password';
+    });
+
+    $('login-form').addEventListener('submit', async e => {
+        e.preventDefault();
+        const btn = $('login-btn'); btn.textContent = 'Logging in...'; btn.disabled = true;
+        $('login-error').hidden = true;
+        try {
+            await api('/api/admin/login', 'POST', { username: $('username').value.trim(), password: $('password').value });
+            location.href = 'admin-dashboard.html';
+        } catch (err) {
+            $('login-error').textContent = err.message; $('login-error').hidden = false;
+            btn.textContent = 'Login'; btn.disabled = false;
+        }
+    });
+}
+
+/* ================= DASHBOARD ================= */
+if ($('pk-body')) {
+    let packages = [], deleteId = null, toastTimer;
+
+    const toast = (msg, error) => {
+        const t = $('toast'); t.textContent = msg; t.className = 'toast show' + (error ? ' error' : '');
+        clearTimeout(toastTimer); toastTimer = setTimeout(() => t.className = 'toast', 2800);
+    };
+
+    async function init() {
+        try {
+            const c = await api('/api/admin/check');
+            if (!c.loggedIn) return (location.href = 'admin-login.html');
+        } catch { return (location.href = 'admin-login.html'); }
+        await Promise.all([loadPackages(), loadStats(), loadBookings()]);
+    }
+
+    async function loadStats() {
+        const s = await api('/api/admin/stats');
+        $('s-total').textContent = s.total; $('s-featured').textContent = s.featured;
+        $('s-avg').textContent = inr(s.avgPrice); $('s-bookings').textContent = s.bookings;
+    }
+
+    async function loadPackages() {
+        packages = await api('/api/packages');
+        $('places').innerHTML = [...new Set(packages.map(p => p.destination))].map(d => `<option value="${esc(d)}">`).join('');
+        renderTable();
+    }
+
+    function renderTable() {
+        const q = $('a-search').value.toLowerCase().trim();
+        const list = packages.filter(p => !q || `${p.name} ${p.destination} ${p.state} ${p.category}`.toLowerCase().includes(q));
+        $('pk-body').innerHTML = list.length ? list.map(p => `
+            <tr>
+                <td>${p.id}</td>
+                <td><div class="cell-pk"><img src="${esc(p.image)}" alt="" onerror="this.onerror=null;this.src='images/taj-mahal.jpg'"><strong>${esc(p.name)}</strong></div></td>
+                <td>${esc(p.destination)}<br><small>${esc(p.state)}</small></td>
+                <td><span class="badge">${esc(p.category)}</span></td>
+                <td>${p.days}D / ${p.nights}N</td>
+                <td><strong>${inr(p.price)}</strong></td>
+                <td>${p.featured ? '<span class="badge star">⭐ Featured</span>' : '—'}</td>
+                <td><button class="act" title="Edit" data-edit="${p.id}">✏️</button>
+                    <button class="act" title="Delete" data-del="${p.id}">🗑️</button></td>
+            </tr>`).join('') : `<tr><td colspan="8" class="empty">No packages found.</td></tr>`;
+    }
+
+    async function loadBookings() {
+        const rows = await api('/api/admin/bookings');
+        $('bk-empty').hidden = rows.length > 0;
+        if (!rows.length) { $('bk-head').innerHTML = ''; $('bk-body').innerHTML = ''; return; }
+        const cols = Object.keys(rows[0]);
+        $('bk-head').innerHTML = '<tr>' + cols.map(c => `<th>${esc(c.replace(/_/g, ' '))}</th>`).join('') + '</tr>';
+        $('bk-body').innerHTML = rows.map(r => '<tr>' + cols.map(c => `<td>${esc(r[c])}</td>`).join('') + '</tr>').join('');
+    }
+
+    const F = ['name', 'destination', 'state', 'category', 'days', 'price', 'image', 'description', 'highlights'];
+
+    function openForm(p) {
+        $('form-title').textContent = p ? 'Edit Package' : 'Add Package';
+        $('f-id').value = p ? p.id : '';
+        F.forEach(k => $('f-' + k).value = p ? (p[k] ?? '') : (k === 'category' ? 'Nature' : ''));
+        $('f-featured').checked = p ? !!p.featured : false;
+        $('form-error').hidden = true;
+        $('form-modal').hidden = false;
+        $('f-name').focus();
+    }
+
+    $('add-btn').addEventListener('click', () => openForm());
+
+    $('pk-form').addEventListener('submit', async e => {
+        e.preventDefault();
+        const body = {}; F.forEach(k => body[k] = $('f-' + k).value);
+        body.featured = $('f-featured').checked;
+        const id = $('f-id').value;
+        try {
+            await api(id ? `/api/admin/packages/${id}` : '/api/admin/packages', id ? 'PUT' : 'POST', body);
+            $('form-modal').hidden = true;
+            toast(id ? '✅ Package updated' : '✅ Package added');
+            await Promise.all([loadPackages(), loadStats()]);
+        } catch (err) { $('form-error').textContent = err.message; $('form-error').hidden = false; }
+    });
+
+    $('pk-body').addEventListener('click', e => {
+        const ed = e.target.closest('[data-edit]'), del = e.target.closest('[data-del]');
+        if (ed) openForm(packages.find(p => p.id == ed.dataset.edit));
+        if (del) {
+            const p = packages.find(x => x.id == del.dataset.del); deleteId = p.id;
+            $('del-text').textContent = `"${p.name}" will be permanently removed.`;
+            $('del-modal').hidden = false;
+        }
+    });
+
+    $('del-confirm').addEventListener('click', async () => {
+        try {
+            await api(`/api/admin/packages/${deleteId}`, 'DELETE');
+            $('del-modal').hidden = true; toast('🗑️ Package deleted');
+            await Promise.all([loadPackages(), loadStats()]);
+        } catch (err) { toast(err.message, true); }
+    });
+
+    $('a-search').addEventListener('input', renderTable);
+    document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => {
+        $('form-modal').hidden = true; $('del-modal').hidden = true;
+    }));
+    document.querySelectorAll('.modal').forEach(m => m.addEventListener('click', e => { if (e.target === m) m.hidden = true; }));
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.modal').forEach(m => m.hidden = true); });
+
+    document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === t));
+        $('tab-packages').hidden = t.dataset.tab !== 'packages';
+        $('tab-bookings').hidden = t.dataset.tab !== 'bookings';
+    }));
+
+    $('logout').addEventListener('click', async () => {
+        await api('/api/admin/logout', 'POST').catch(() => {});
+        location.href = 'admin-login.html';
+    });
+
+    init();
+}

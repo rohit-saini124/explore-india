@@ -11,26 +11,27 @@
 <body class="dash-body">
     <header class="dash-header">
         <a href="index.html" class="logo"><img src="images/logo.png" alt="Explore India Logo"></a>
-        <div class="dash-user"><span>👤 Admin</span>
+        <div class="dash-user"><span id="dash-name">👤 Admin</span>
             <button class="btn btn-dark btn-sm" id="logout">Logout</button></div>
     </header>
- 
+
     <main class="dash">
         <h1>Admin Dashboard</h1>
         <p class="dash-sub">Manage packages and view booking enquiries.</p>
- 
+
         <div class="stats" id="stats">
             <div class="stat"><span>📦</span><h3 id="s-total">–</h3><p>Total Packages</p></div>
             <div class="stat"><span>⭐</span><h3 id="s-featured">–</h3><p>Featured</p></div>
             <div class="stat"><span>💰</span><h3 id="s-avg">–</h3><p>Average Price</p></div>
             <div class="stat"><span>📝</span><h3 id="s-bookings">–</h3><p>Enquiries</p></div>
         </div>
- 
+
         <div class="tabs">
             <button class="tab active" data-tab="packages">Packages</button>
             <button class="tab" data-tab="bookings">Booking Enquiries</button>
+            <button class="tab" data-tab="settings">⚙️ Settings</button>
         </div>
- 
+
         <!-- Packages tab -->
         <section class="panel" id="tab-packages">
             <div class="panel-top">
@@ -45,7 +46,7 @@
                 </table>
             </div>
         </section>
- 
+
         <!-- Bookings tab -->
         <section class="panel" id="tab-bookings" hidden>
             <div class="table-wrap">
@@ -56,8 +57,39 @@
             </div>
             <p class="empty" id="bk-empty" hidden>No enquiries yet.</p>
         </section>
+
+        <!-- Settings tab -->
+        <section class="panel" id="tab-settings" hidden>
+            <div class="settings-grid">
+                <form class="set-card" id="pw-form" autocomplete="off">
+                    <h3>🔒 Change Password</h3>
+                    <p class="hint">Use at least 8 characters.</p>
+                    <label>Current password</label>
+                    <input type="password" id="cp-current" autocomplete="current-password">
+                    <label>New password</label>
+                    <input type="password" id="cp-new" autocomplete="new-password">
+                    <label>Confirm new password</label>
+                    <input type="password" id="cp-confirm" autocomplete="new-password">
+                    <div class="alert" id="pw-msg" hidden></div>
+                    <button type="submit" class="btn btn-primary">Update Password</button>
+                </form>
+
+                <form class="set-card" id="sq-form" autocomplete="off">
+                    <h3>🛡️ Recovery Question</h3>
+                    <p class="hint">Used on the “Forgot password?” page to reset your password.</p>
+                    <label>Question</label>
+                    <input type="text" id="sq-question">
+                    <label>Answer</label>
+                    <input type="text" id="sq-answer" placeholder="Not case sensitive">
+                    <label>Current password</label>
+                    <input type="password" id="sq-current" autocomplete="current-password">
+                    <div class="alert" id="sq-msg" hidden></div>
+                    <button type="submit" class="btn btn-primary">Save Recovery Question</button>
+                </form>
+            </div>
+        </section>
     </main>
- 
+
     <!-- Add / Edit modal -->
     <div class="modal" id="form-modal" hidden>
         <form class="modal-box form-box" id="pk-form">
@@ -77,7 +109,20 @@
                     </select></div>
                 <div><label>Days *</label><input type="number" id="f-days" min="1" max="30" required></div>
                 <div><label>Price (₹) *</label><input type="number" id="f-price" min="1" required></div>
-                <div><label>Image path</label><input id="f-image" placeholder="images/manali.jpg"></div>
+                <div class="full">
+                    <label>Package Photo</label>
+                    <div class="upload" id="upload-box" tabindex="0" role="button" aria-label="Choose photo">
+                        <img id="img-preview" alt="Preview" hidden>
+                        <div class="upload-text" id="upload-text">📷 Click here to choose a photo<br><small>JPG or PNG — it is resized automatically</small></div>
+                    </div>
+                    <input type="file" id="f-file" accept="image/*" hidden>
+                    <input type="hidden" id="f-image">
+                    <div class="upload-actions">
+                        <button type="button" class="btn btn-outline-dark btn-sm" id="pick-img">Choose Photo</button>
+                        <button type="button" class="link-btn" id="clear-img" hidden>Remove photo</button>
+                        <span class="hint" id="upload-status"></span>
+                    </div>
+                </div>
                 <div class="full"><label>Description</label><textarea id="f-description" rows="2"></textarea></div>
                 <div class="full"><label>Highlights (comma separated)</label>
                     <input id="f-highlights" placeholder="Solang Valley, Rohtang Pass, ..."></div>
@@ -90,7 +135,7 @@
             </div>
         </form>
     </div>
- 
+
     <!-- Delete confirm -->
     <div class="modal" id="del-modal" hidden>
         <div class="modal-box confirm-box">
@@ -102,9 +147,8 @@
             </div>
         </div>
     </div>
- 
+
     <div class="toast" id="toast"></div>
     <script src="js/admin.js"></script>
 </body>
 </html>
- 

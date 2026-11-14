@@ -27,21 +27,47 @@
             <h2>Admin Login</h2>
             <p>Sign in to manage travel packages.</p>
             <div class="alert" id="login-error" hidden></div>
- 
+
             <label for="username">Username</label>
             <input type="text" id="username" placeholder="Enter username" required autofocus>
- 
+
             <label for="password">Password</label>
             <div class="pw-wrap">
                 <input type="password" id="password" placeholder="Enter password" required>
                 <button type="button" id="toggle-pw" aria-label="Show password">👁</button>
             </div>
- 
+
+            <a href="#" id="forgot-link" class="forgot-link">Forgot password?</a>
+
             <button type="submit" class="btn btn-primary btn-block" id="login-btn">Login</button>
             <a href="index.html" class="back-link">← Back to website</a>
+        </form>
+
+        <form class="login-card" id="forgot-form" hidden autocomplete="off">
+            <div class="login-icon">🔑</div>
+            <h2>Reset Password</h2>
+            <p id="fp-sub">Enter your admin username to continue.</p>
+            <div class="alert" id="forgot-msg" hidden></div>
+
+            <div id="step1">
+                <label for="fp-username">Username</label>
+                <input type="text" id="fp-username" placeholder="Enter username">
+            </div>
+
+            <div id="step2" hidden>
+                <p class="question" id="fp-question"></p>
+                <label for="fp-answer">Your answer</label>
+                <input type="text" id="fp-answer" placeholder="Type your answer">
+                <label for="fp-new">New password (min 8 characters)</label>
+                <input type="password" id="fp-new" placeholder="New password">
+                <label for="fp-confirm">Confirm new password</label>
+                <input type="password" id="fp-confirm" placeholder="Confirm new password">
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block" id="fp-btn">Continue</button>
+            <a href="#" id="back-login" class="back-link">← Back to login</a>
         </form>
     </main>
     <script src="js/admin.js"></script>
 </body>
 </html>
- 

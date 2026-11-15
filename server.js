@@ -1,4 +1,5 @@
 require("dotenv").config();
+
 const path = require("path");
 const express = require("express");
 const session = require("express-session");
@@ -10,8 +11,14 @@ const bookingRoutes = require("./routes/booking");
 const adminRoutes = require("./routes/admin");
 
 const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Vercel runs behind a proxy. Required for secure session cookies.
+app.set("trust proxy", 1);
+
 app.use(express.json({ limit: "1mb" }));
 
+// Use PostgreSQL to store sessions.
 const PgSession = require("connect-pg-simple")(session);
 
 app.use(session({
@@ -27,30 +34,16 @@ app.use(session({
 
     cookie: {
         httpOnly: true,
-        secure: true,
-        sameSite: "lax",
-        maxAge: 8 * 60 * 60 * 1000
-    }
-}));
-
-
-const PORT = process.env.PORT || 3000;
-
-app.use(express.json({ limit: "1mb" }));
-app.use(session({
-    secret: process.env.SESSION_SECRET || "change-this-secret-before-deployment",
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-        httpOnly: true,
-        sameSite: "lax",
         secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
         maxAge: 8 * 60 * 60 * 1000
     }
 }));
 
+// Serve frontend files.
 app.use(express.static(path.join(__dirname, "public")));
 
+// API routes.
 app.use("/api/destinations", destinationsRoutes);
 app.use("/api/packages", packagesRoutes);
 app.use("/api/booking", bookingRoutes);

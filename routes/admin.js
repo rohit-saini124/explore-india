@@ -43,11 +43,25 @@ router.post("/login", async (req, res) => {
         }
 
         req.session.regenerate((error) => {
-            if (error) return res.status(500).json({ error: "Could not start admin session." });
-            req.session.adminId = admin.id;
-            req.session.adminUsername = admin.username;
-            res.json({ success: true });
+    if (error) {
+        return res.status(500).json({
+            error: "Could not start admin session."
         });
+    }
+
+    req.session.adminId = admin.id;
+    req.session.adminUsername = admin.username;
+
+    req.session.save((error) => {
+        if (error) {
+            return res.status(500).json({
+                error: "Could not save admin session."
+            });
+        }
+
+        res.json({ success: true });
+    });
+});
     } catch (error) {
         console.error("Admin login failed:", error);
         res.status(500).json({ error: "Could not log in." });

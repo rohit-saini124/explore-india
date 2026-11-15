@@ -2,6 +2,7 @@ require("dotenv").config();
 const path = require("path");
 const express = require("express");
 const session = require("express-session");
+const db = require("./database");
 
 const destinationsRoutes = require("./routes/destinations");
 const packagesRoutes = require("./routes/packages");
@@ -9,6 +10,30 @@ const bookingRoutes = require("./routes/booking");
 const adminRoutes = require("./routes/admin");
 
 const app = express();
+app.use(express.json({ limit: "1mb" }));
+
+const PgSession = require("connect-pg-simple")(session);
+
+app.use(session({
+    store: new PgSession({
+        pool: db,
+        tableName: "user_sessions",
+        createTableIfMissing: true
+    }),
+
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+
+    cookie: {
+        httpOnly: true,
+        secure: true,
+        sameSite: "lax",
+        maxAge: 8 * 60 * 60 * 1000
+    }
+}));
+
+
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json({ limit: "1mb" }));

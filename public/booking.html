@@ -188,19 +188,34 @@
                     </select>
                 </div>
 
+                                
                 <!-- Preferred Package -->
                 <div class="form-group">
                     <label for="package">Preferred Travel Package</label>
 
-                    <select id="package" name="package">
-                        <option value="">Select a package</option>
-                        <option value="Manali Mountain Escape">Manali Mountain Escape</option>
-                        <option value="Kerala Backwater Tour">Kerala Backwater Tour</option>
-                        <option value="Royal Rajasthan Tour">Royal Rajasthan Tour</option>
-                        <option value="Goa Beach Holiday">Goa Beach Holiday</option>
+                    <select id="package" name="package" disabled>
+                        <option value="">Select a destination first</option>
+
+                        <option value="Manali Mountain Escape" data-destination="Manali">
+                            Manali Mountain Escape
+                        </option>
+
+                        <option value="Kerala Backwater Tour" data-destination="Kerala">
+                            Kerala Backwater Tour
+                        </option>
+
+                        <option value="Royal Rajasthan Tour" data-destination="Jaipur">
+                            Royal Rajasthan Tour
+                        </option>
+
+                        <option value="Goa Beach Holiday" data-destination="Goa">
+                            Goa Beach Holiday
+                        </option>
+
                         <option value="Not Decided">Not Decided Yet</option>
                     </select>
                 </div>
+
 
 
 

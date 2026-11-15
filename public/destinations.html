@@ -1,80 +1,54 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Explore India - Destinations</title>
-
+    <link rel="icon" type="image/png" href="images/logo.png">
+    <title>Destinations | Explore India</title>
+    <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/destinations.css">
 </head>
-
 <body>
-    <header class="main-header">
-        <div class="header-logo">
-            <img src="images/logo.png" alt="Explore India Logo">
-        </div>
-        <div class="header-title">
-             <h1>Explore India</h1>
-             <p>Discover the beauty of India</p>
-        </div>
+    <header>
         <nav class="navbar">
-            <a href="index.html">Home</a>
-            <a href="destinations.html">Destinations</a>
-            <a href="packages.html">Packages</a>
-            <a href="booking.html">Book Enquiry</a>
-            <a href="admin.html">Admin</a>
+            <a href="index.html" class="logo"><img src="images/logo.png" alt="Explore India Logo"></a>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="destinations.html" class="active">Destinations</a></li>
+                <li><a href="packages.html">Packages</a></li>
+                <li><a href="booking.html">Book Enquiry</a></li>
+                <!-- <li><a href="admin-login.html">Admin</a></li> -->
+            </ul>
         </nav>
     </header>
-    <main>
-        <h2>Destinations</h2>
 
-        <input
-            type="text"
-            id="searchInput"
-            placeholder="Search destinations..."
-        >
-<div class="category-filter">
-    <button class="category-btn active" data-category="All">All</button>
-    <button class="category-btn" data-category="Mountains">Mountains</button>
-    <button class="category-btn" data-category="Beaches">Beaches</button>
-    <button class="category-btn" data-category="Heritage">Heritage</button>
-    <button class="category-btn" data-category="Spiritual">Spiritual</button>
-    <button class="category-btn" data-category="Nature">Nature</button>
-    <button class="category-btn" data-category="City">City</button>
-    <button class="category-btn" data-category="Rivers">Rivers</button>
-</div>    
-        <div id="destinationContainer">           
-        </div>   
+    <main class="destinations-main">
+        <div class="destinations-heading">
+            <p class="section-subtitle">EXPLORE THE COUNTRY</p>
+            <h1>Destinations</h1>
+            <p>Explore places across India and find somewhere new to visit.</p>
+        </div>
+        <input type="search" id="searchInput" placeholder="Search destinations or states..." aria-label="Search destinations">
+        <div class="category-filter">
+            <button class="category-btn active" data-category="All">All</button>
+            <button class="category-btn" data-category="Mountains">Mountains</button>
+            <button class="category-btn" data-category="Beaches">Beaches</button>
+            <button class="category-btn" data-category="Heritage">Heritage</button>
+            <button class="category-btn" data-category="Spiritual">Spiritual</button>
+            <button class="category-btn" data-category="Nature">Nature</button>
+            <button class="category-btn" data-category="City">City</button>
+            <button class="category-btn" data-category="Rivers">Rivers</button>
+        </div>
+        <div id="destinationContainer"></div>
     </main>
+
     <footer class="footer">
-        <div class="footer-container">
-            <div class="footer-section">
-                <h2>✦ Explore India</h2>
-                <p>
-                    Explore India helps visitors discover different tourist
-                    destinations and explore available travel packages.
-                </p>
-            </div>
-            <div class="footer-section">
-                <h3>Quick Links</h3>
-                <a href="index.html">Home</a>
-                <a href="destinations.html">Destinations</a>
-                <a href="packages.html">Packages</a>
-                <a href="booking.html">Book Enquiry</a>
-            </div>
-            <div class="footer-section">
-                <h3>About This Project</h3>
-                <p>
-                    A simple travel website where users can explore
-                    destinations, view packages and submit booking enquiries.
-                </p>
-            </div>
+        <div class="footer-content">
+            <div class="footer-about"><h2>✦ Explore India</h2><p>Discover the beauty, culture and diversity of India.</p></div>
+            <div class="footer-links"><h3>Quick Links</h3><a href="index.html">Home</a><a href="destinations.html">Destinations</a><a href="packages.html">Packages</a><a href="booking.html">Book Enquiry</a><a href="admin-login.html">Admin Login</a></div>
+            <div class="footer-contact"><h3>About This Project</h3><p>A simple travel discovery and booking enquiry management system.</p></div>
         </div>
-        <div class="footer-bottom">
-            <p>© 2026 Explore India. All rights reserved.</p>
-        </div>
+        <div class="footer-bottom"><p>© 2026 Explore India. All rights reserved.</p></div>
     </footer>
     <script src="js/destinations.js"></script>
 </body>

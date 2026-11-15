@@ -143,3 +143,6 @@ The project was developed by a team of three members. Each member worked on diff
 
 All team members contributed to developing their respective modules.
 
+Deployed website link: https://explore-india-jet.vercel.app/index.html
+Github Repo link: https://github.com/rohit-saini124/explore-india 
+

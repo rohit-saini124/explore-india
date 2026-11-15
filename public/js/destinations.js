@@ -315,7 +315,7 @@ function displayDestinations(destinationList) {
         }
         const packageButton = card.querySelector(".package-btn");
         packageButton.addEventListener("click", function () {
-            alert("Travel packages for " + destination.name + " coming soon!");
+            window.location.href = "packages.html?search=" + encodeURIComponent(destination.name);
         });
         container.appendChild(card);
     });

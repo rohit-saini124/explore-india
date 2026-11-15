@@ -1,201 +1,128 @@
-// Getting HTML elements
 const bookingForm = document.getElementById("booking-form");
 const formMessage = document.getElementById("form-message");
 const travelDate = document.getElementById("travel-date");
-
-const destination = document.getElementById("destination");
+const destinationSelect = document.getElementById("destination");
 const packageSelect = document.getElementById("package");
-
 const submitButton = bookingForm.querySelector('button[type="submit"]');
 
-// Store packages received from the backend
 let allPackages = [];
 
-
-// Set today's date as the minimum travel date
+// Do not allow a travel date in the past.
 const today = new Date();
+travelDate.min = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
-const year = today.getFullYear();
-const month = String(today.getMonth() + 1).padStart(2, "0");
-const day = String(today.getDate()).padStart(2, "0");
-
-travelDate.min = `${year}-${month}-${day}`;
-
-
-// Load destinations and packages from backend
 async function loadFormOptions() {
     try {
-        // Fetch destinations
-        const destinationResponse = await fetch("/api/destinations");
-
-        if (!destinationResponse.ok) {
-            throw new Error("Could not load destinations");
+        const [destinationResponse, packageResponse] = await Promise.all([
+            fetch('/api/destinations'),
+            fetch('/api/packages')
+        ]);
+        if (!destinationResponse.ok || !packageResponse.ok) {
+            throw new Error('Could not load destinations or packages.');
         }
 
         const destinations = await destinationResponse.json();
-
-        // Fetch packages
-        const packageResponse = await fetch("/api/packages");
-
-        if (!packageResponse.ok) {
-            throw new Error("Could not load packages");
-        }
-
         allPackages = await packageResponse.json();
 
-        // Clear old hardcoded destination options
-        destination.innerHTML = '<option value="">Select a destination</option>';
-
-        // Add destinations received from database
-        destinations.forEach(function(item) {
-            const option = document.createElement("option");
-
+        destinationSelect.innerHTML = '<option value="">Select a destination</option>';
+        destinations.forEach(item => {
+            const option = document.createElement('option');
             option.value = item.id;
             option.textContent = item.name;
-
-            destination.appendChild(option);
+            destinationSelect.appendChild(option);
         });
 
-        console.log("Destinations and packages loaded successfully!");
-
+        // Preselect a package when the user came from the packages page.
+        const params = new URLSearchParams(location.search);
+        const requestedDestination = params.get('destination_id');
+        const requestedPackage = params.get('package_id');
+        if (requestedDestination) {
+            destinationSelect.value = requestedDestination;
+            updatePackageOptions();
+            if (requestedPackage) packageSelect.value = requestedPackage;
+        }
     } catch (error) {
-        console.error("Error loading form options:", error);
-
-        formMessage.textContent =
-            "Could not load destinations. Please refresh the page.";
-
-        formMessage.className = "form-message error";
+        console.error(error);
+        formMessage.textContent = 'Could not load destinations. Please refresh the page.';
+        formMessage.className = 'form-message error';
     }
 }
 
+function updatePackageOptions() {
+    const destinationId = Number(destinationSelect.value);
+    packageSelect.innerHTML = '';
 
-// Filter packages when destination changes
-destination.addEventListener("change", function() {
+    const defaultOption = document.createElement('option');
+    defaultOption.value = '';
 
-    const selectedDestinationId = Number(destination.value);
-
-    // Clear previous package options
-    packageSelect.innerHTML = "";
-
-    // Add default option
-    const defaultOption = document.createElement("option");
-
-    defaultOption.value = "";
-    defaultOption.textContent = selectedDestinationId
-        ? "Not Decided Yet"
-        : "Select a destination first";
-
-    packageSelect.appendChild(defaultOption);
-
-    // If no destination is selected
-    if (!selectedDestinationId) {
+    if (!destinationId) {
+        defaultOption.textContent = 'Select a destination first';
+        packageSelect.appendChild(defaultOption);
         packageSelect.disabled = true;
         return;
     }
 
-    // Find packages belonging to selected destination
-    const matchingPackages = allPackages.filter(function(item) {
-        return Number(item.destination_id) === selectedDestinationId;
-    });
+    const matchingPackages = allPackages.filter(item => Number(item.destination_id) === destinationId);
+    defaultOption.textContent = matchingPackages.length ? 'Not decided yet' : 'No package available';
+    packageSelect.appendChild(defaultOption);
 
-    // Add matching packages
-    matchingPackages.forEach(function(item) {
-
-        const option = document.createElement("option");
-
+    matchingPackages.forEach(item => {
+        const option = document.createElement('option');
         option.value = item.id;
-        option.textContent = item.title + " - ₹" + item.price;
-
+        option.textContent = `${item.title} - ₹${Number(item.price).toLocaleString('en-IN')}`;
         packageSelect.appendChild(option);
     });
 
     packageSelect.disabled = false;
-});
+}
 
+destinationSelect.addEventListener('change', updatePackageOptions);
 
-// Submit booking enquiry to backend
-bookingForm.addEventListener("submit", async function(event) {
-
+bookingForm.addEventListener('submit', async event => {
     event.preventDefault();
-
-    // Check HTML form validation
     if (!bookingForm.checkValidity()) {
         bookingForm.reportValidity();
         return;
     }
 
-    // Collect form information
     const bookingData = {
-        name: document.getElementById("name").value.trim(),
-        phone: document.getElementById("phone").value.trim(),
-        email: document.getElementById("email").value.trim(),
-
-        destination_id: destination.value,
+        name: document.getElementById('name').value.trim(),
+        phone: document.getElementById('phone').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        destination_id: destinationSelect.value,
         package_id: packageSelect.value || null,
-
         travel_date: travelDate.value,
-        travellers: document.getElementById("people").value,
-
-        budget: document.getElementById("budget").value,
-        duration: document.getElementById("duration").value,
-        contact_method: document.getElementById("contact-method").value,
-
-        message: document.getElementById("message").value.trim()
+        travellers: document.getElementById('people').value,
+        budget: document.getElementById('budget').value,
+        duration: document.getElementById('duration').value,
+        contact_method: document.getElementById('contact-method').value,
+        message: document.getElementById('message').value.trim()
     };
 
     try {
         submitButton.disabled = true;
-        submitButton.textContent = "Submitting...";
+        submitButton.textContent = 'Submitting...';
+        formMessage.textContent = '';
 
-        formMessage.textContent = "";
-
-        // Send data to Express backend
-        const response = await fetch("/api/booking", {
-            method: "POST",
-
-            headers: {
-                "Content-Type": "application/json"
-            },
-
+        const response = await fetch('/api/booking', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(bookingData)
         });
-
         const result = await response.json();
+        if (!response.ok) throw new Error(result.message || 'Could not submit enquiry.');
 
-        // Check whether backend accepted the enquiry
-        if (!response.ok) {
-            throw new Error(result.message || "Could not submit enquiry");
-        }
-
-        // Show success message
-        formMessage.textContent =
-            result.message + " Enquiry ID: " + result.enquiry_id;
-
-        formMessage.className = "form-message success";
-
-        // Reset form
+        formMessage.textContent = `${result.message} Enquiry ID: ${result.enquiry_id}`;
+        formMessage.className = 'form-message success';
         bookingForm.reset();
-
-        // Reset package dropdown
-        packageSelect.innerHTML =
-            '<option value="">Select a destination first</option>';
-
-        packageSelect.disabled = true;
-
+        updatePackageOptions();
     } catch (error) {
-
-        console.error("Booking submission error:", error);
-
         formMessage.textContent = error.message;
-        formMessage.className = "form-message error";
-
+        formMessage.className = 'form-message error';
     } finally {
-
         submitButton.disabled = false;
-        submitButton.textContent = "✈ Submit Enquiry";
+        submitButton.textContent = '✈ Submit Enquiry';
     }
 });
 
-
-// Load options when page opens
 loadFormOptions();

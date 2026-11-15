@@ -1,24 +1,17 @@
 const express = require("express");
 const router = express.Router();
-
 const db = require("../database");
 
-// GET all destinations
-router.get("/", async function(req, res) {
+// Return destinations for the destination page and booking form.
+router.get("/", async (req, res) => {
     try {
         const result = await db.query(
-            "SELECT * FROM destinations ORDER BY id"
+            "SELECT id, name, state, description, image FROM destinations ORDER BY name"
         );
-
         res.json(result.rows);
-
     } catch (error) {
-        console.error("Error fetching destinations:", error);
-
-        res.status(500).json({
-            success: false,
-            message: "Could not fetch destinations"
-        });
+        console.error("Could not load destinations:", error);
+        res.status(500).json({ message: "Could not load destinations." });
     }
 });
 

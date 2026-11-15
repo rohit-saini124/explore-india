@@ -1,513 +1,245 @@
-
-const express = require('express');
-const crypto = require('crypto');
-const fs = require('fs');
-const path = require('path');
-const db = require('../database');
+const express = require("express");
+const crypto = require("crypto");
+const db = require("../database");
 const router = express.Router();
 
-// ---------- password helpers ----------
-function makeHash(text) {
-  const salt = crypto.randomBytes(16).toString('hex');
-  const hash = crypto.scryptSync(String(text), salt, 64).toString('hex');
-  return salt + ':' + hash;
-}
-
-function matches(text, saved) {
-  const parts = String(saved).split(':');
-  return crypto.scryptSync(String(text), parts[0], 64).toString('hex') === parts[1];
-}
-
-function clean(text) {
-  return String(text || '').trim().toLowerCase();
-}
-
-// ---------- create default admin if none exists ----------
-async function createAdmin() {
-  try {
-    const result = await db.query('SELECT COUNT(*) AS c FROM admins');
-
-    if (Number(result.rows[0].c) === 0) {
-      await db.query(
-        `INSERT INTO admins (username, password_hash, question, answer_hash)
-         VALUES ($1, $2, $3, $4)`,
-        [
-          'niteesh',
-          makeHash('niteesh123'),
-          'Which Indian destination is your favourite?',
-          makeHash('goa')
-        ]
-      );
+function passwordMatches(password, savedHash) {
+    try {
+        const parts = String(savedHash || "").split(":");
+        if (parts.length !== 2) return false;
+        const actual = crypto.scryptSync(String(password), parts[0], 64);
+        const expected = Buffer.from(parts[1], "hex");
+        return actual.length === expected.length && crypto.timingSafeEqual(actual, expected);
+    } catch (error) {
+        return false;
     }
-  } catch (error) {
-    console.log('Error creating admin:', error);
-  }
 }
 
-createAdmin();
-
-// ---------- stop guessing: 5 wrong tries per person ----------
-const wrongTries = {};
-
-setInterval(() => {
-  for (const ip in wrongTries) delete wrongTries[ip];
-}, 15 * 60 * 1000).unref();
-
-const blocked = ip => (wrongTries[ip] || 0) >= 5;
-const addWrong = ip => {
-  wrongTries[ip] = (wrongTries[ip] || 0) + 1;
-};
-
-const BLOCK_MSG = {
-  error: 'Too many wrong attempts. Try again in 15 minutes.'
-};
-
-// ---------- middleware ----------
 function requireAdmin(req, res, next) {
-  if (req.session && req.session.admin) return next();
-  res.status(401).json({ error: 'Please log in as admin' });
+    if (req.session && req.session.adminId) return next();
+    return res.status(401).json({ error: "Please log in as admin." });
 }
 
-router.use((req, res, next) => {
-  if (!req.session) {
-    return res.status(500).json({
-      error: 'Server setup missing: add express-session in server.js'
+router.get("/check", (req, res) => {
+    res.json({ loggedIn: Boolean(req.session && req.session.adminId) });
+});
+
+router.post("/login", async (req, res) => {
+    try {
+        const username = String(req.body.username || "").trim();
+        const password = String(req.body.password || "");
+        if (!username || !password) {
+            return res.status(400).json({ error: "Enter your username and password." });
+        }
+
+        const result = await db.query(
+            "SELECT id, username, password_hash FROM admins WHERE username = $1",
+            [username]
+        );
+        const admin = result.rows[0];
+
+        if (!admin || !passwordMatches(password, admin.password_hash)) {
+            return res.status(401).json({ error: "Incorrect username or password." });
+        }
+
+        req.session.regenerate((error) => {
+            if (error) return res.status(500).json({ error: "Could not start admin session." });
+            req.session.adminId = admin.id;
+            req.session.adminUsername = admin.username;
+            res.json({ success: true });
+        });
+    } catch (error) {
+        console.error("Admin login failed:", error);
+        res.status(500).json({ error: "Could not log in." });
+    }
+});
+
+router.post("/logout", (req, res) => {
+    if (!req.session) return res.json({ success: true });
+    req.session.destroy((error) => {
+        if (error) return res.status(500).json({ error: "Could not log out." });
+        res.clearCookie("connect.sid");
+        res.json({ success: true });
     });
-  }
-
-  if (!req.body) req.body = {};
-  next();
 });
 
-// ---------- login / logout ----------
-router.post('/login', async (req, res) => {
-  try {
-    if (blocked(req.ip)) return res.status(429).json(BLOCK_MSG);
+router.get("/stats", requireAdmin, async (req, res) => {
+    try {
+        const result = await db.query(`
+            SELECT
+                (SELECT COUNT(*) FROM packages) AS packages,
+                (SELECT COUNT(*) FROM enquiries) AS enquiries,
+                (SELECT COUNT(*) FROM enquiries WHERE status = 'Pending') AS pending,
+                (SELECT COUNT(*) FROM enquiries WHERE status = 'Confirmed') AS confirmed
+        `);
+        const row = result.rows[0];
+        res.json({
+            packages: Number(row.packages),
+            enquiries: Number(row.enquiries),
+            pending: Number(row.pending),
+            confirmed: Number(row.confirmed)
+        });
+    } catch (error) {
+        console.error("Could not load admin summary:", error);
+        res.status(500).json({ error: "Could not load dashboard summary." });
+    }
+});
 
-    const result = await db.query(
-      'SELECT * FROM admins WHERE username = $1',
-      [String(req.body.username || '').trim()]
-    );
+router.get("/bookings", requireAdmin, async (req, res) => {
+    try {
+        const result = await db.query(`
+            SELECT
+                enquiries.id,
+                enquiries.name,
+                enquiries.email,
+                enquiries.phone,
+                destinations.name AS destination,
+                packages.title AS package,
+                enquiries.travel_date,
+                enquiries.travellers,
+                enquiries.budget,
+                enquiries.duration,
+                enquiries.contact_method,
+                enquiries.message,
+                enquiries.status,
+                enquiries.created_at
+            FROM enquiries
+            JOIN destinations ON enquiries.destination_id = destinations.id
+            LEFT JOIN packages ON enquiries.package_id = packages.id
+            ORDER BY enquiries.created_at DESC
+        `);
+        res.json(result.rows);
+    } catch (error) {
+        console.error("Could not load enquiries:", error);
+        res.status(500).json({ error: "Could not load enquiries." });
+    }
+});
 
-    const user = result.rows[0];
+router.put("/bookings/:id/status", requireAdmin, async (req, res) => {
+    try {
+        const status = req.body.status;
+        if (!["Pending", "Contacted", "Confirmed"].includes(status)) {
+            return res.status(400).json({ error: "Choose a valid enquiry status." });
+        }
 
-    if (user && matches(req.body.password, user.password_hash)) {
-      delete wrongTries[req.ip];
+        const result = await db.query(
+            "UPDATE enquiries SET status = $1 WHERE id = $2 RETURNING id",
+            [status, req.params.id]
+        );
+        if (result.rowCount === 0) {
+            return res.status(404).json({ error: "Enquiry not found." });
+        }
+        res.json({ success: true });
+    } catch (error) {
+        console.error("Could not update enquiry:", error);
+        res.status(500).json({ error: "Could not update enquiry status." });
+    }
+});
 
-      req.session.admin = true;
-      req.session.userId = user.id;
+function validatePackage(body) {
+    const title = String(body.title || "").trim();
+    const destinationId = Number(body.destination_id);
+    const days = Number(body.days);
+    const price = Number(body.price);
 
-      return res.json({ success: true });
+    if (!title || title.length < 2) return { error: "Enter a package name." };
+    if (!Number.isInteger(destinationId) || destinationId < 1) return { error: "Select a destination." };
+    if (!Number.isInteger(days) || days < 1 || days > 30) return { error: "Days must be between 1 and 30." };
+    if (!Number.isFinite(price) || price <= 0) return { error: "Enter a valid package price." };
+
+    let image = String(body.image || "").trim();
+    if (image.includes("..") || (!image.startsWith("/images/") && !image.startsWith("images/"))) {
+        image = "";
     }
 
-    addWrong(req.ip);
-    res.status(401).json({ error: 'Invalid username or password' });
-
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ error: 'Login failed' });
-  }
-});
-
-router.post('/logout', (req, res) => {
-  req.session.destroy(() => res.json({ success: true }));
-});
-
-router.get('/check', (req, res) => {
-  res.json({ loggedIn: !!req.session.admin });
-});
-
-router.get('/me', requireAdmin, async (req, res) => {
-  try {
-    const result = await db.query(
-      'SELECT username, question FROM admins WHERE id = $1',
-      [req.session.userId]
-    );
-
-    const user = result.rows[0];
-
-    if (!user) return res.status(404).json({ error: 'Admin not found' });
-
-    res.json(user);
-  } catch (error) {
-    res.status(500).json({ error: 'Could not get admin details' });
-  }
-});
-
-// ---------- change password ----------
-router.post('/change-password', requireAdmin, async (req, res) => {
-  try {
-    const result = await db.query(
-      'SELECT * FROM admins WHERE id = $1',
-      [req.session.userId]
-    );
-
-    const user = result.rows[0];
-    const newPassword = String(req.body.newPassword || '');
-
-    if (!user || !matches(req.body.currentPassword, user.password_hash)) {
-      return res.status(400).json({ error: 'Current password is incorrect' });
-    }
-
-    if (newPassword.length < 8) {
-      return res.status(400).json({ error: 'New password must be at least 8 characters' });
-    }
-
-    if (newPassword === req.body.currentPassword) {
-      return res.status(400).json({ error: 'New password must be different from the current one' });
-    }
-
-    await db.query(
-      'UPDATE admins SET password_hash = $1 WHERE id = $2',
-      [makeHash(newPassword), user.id]
-    );
-
-    res.json({ success: true });
-
-  } catch (error) {
-    res.status(500).json({ error: 'Could not change password' });
-  }
-});
-
-// ---------- change recovery question ----------
-router.post('/security', requireAdmin, async (req, res) => {
-  try {
-    const result = await db.query(
-      'SELECT * FROM admins WHERE id = $1',
-      [req.session.userId]
-    );
-
-    const user = result.rows[0];
-    const question = String(req.body.question || '').trim();
-    const answer = clean(req.body.answer);
-
-    if (!user || !matches(req.body.currentPassword, user.password_hash)) {
-      return res.status(400).json({ error: 'Current password is incorrect' });
-    }
-
-    if (!question || answer.length < 2) {
-      return res.status(400).json({
-        error: 'Enter a question and an answer (at least 2 characters)'
-      });
-    }
-
-    await db.query(
-      'UPDATE admins SET question = $1, answer_hash = $2 WHERE id = $3',
-      [question, makeHash(answer), user.id]
-    );
-
-    res.json({ success: true });
-
-  } catch (error) {
-    res.status(500).json({ error: 'Could not update security question' });
-  }
-});
-
-// ---------- forgot password ----------
-router.post('/forgot/question', async (req, res) => {
-  try {
-    const result = await db.query(
-      'SELECT question FROM admins WHERE username = $1',
-      [String(req.body.username || '').trim()]
-    );
-
-    const user = result.rows[0];
-
-    if (!user) {
-      return res.status(404).json({
-        error: 'No admin account with that username'
-      });
-    }
-
-    res.json({ question: user.question });
-
-  } catch (error) {
-    res.status(500).json({ error: 'Could not get security question' });
-  }
-});
-
-router.post('/forgot/reset', async (req, res) => {
-  try {
-    if (blocked(req.ip)) return res.status(429).json(BLOCK_MSG);
-
-    const result = await db.query(
-      'SELECT * FROM admins WHERE username = $1',
-      [String(req.body.username || '').trim()]
-    );
-
-    const user = result.rows[0];
-    const newPassword = String(req.body.newPassword || '');
-
-    if (!user || !matches(clean(req.body.answer), user.answer_hash)) {
-      addWrong(req.ip);
-      return res.status(400).json({ error: 'That answer is not correct' });
-    }
-
-    if (newPassword.length < 8) {
-      return res.status(400).json({
-        error: 'New password must be at least 8 characters'
-      });
-    }
-
-    await db.query(
-      'UPDATE admins SET password_hash = $1 WHERE id = $2',
-      [makeHash(newPassword), user.id]
-    );
-
-    delete wrongTries[req.ip];
-    res.json({ success: true });
-
-  } catch (error) {
-    res.status(500).json({ error: 'Could not reset password' });
-  }
-});
-
-// ---------- photo upload ----------
-router.post('/upload', requireAdmin, (req, res) => {
-  const start = 'data:image/jpeg;base64,';
-  const data = String(req.body.data || '');
-
-  if (!data.startsWith(start)) {
-    return res.status(400).json({
-      error: 'Please choose a valid image (JPG or PNG)'
-    });
-  }
-
-  const file = Buffer.from(data.slice(start.length), 'base64');
-
-  if (file.length > 4 * 1024 * 1024) {
-    return res.status(400).json({ error: 'Image is too large (max 4 MB)' });
-  }
-
-  if (file.length < 2 || file[0] !== 0xFF || file[1] !== 0xD8) {
-    return res.status(400).json({ error: 'That file is not a valid image' });
-  }
-
-  const folder = path.join(__dirname, '..', 'public', 'images');
-  fs.mkdirSync(folder, { recursive: true });
-
-  const name = 'package-' + Date.now() + '-' +
-    crypto.randomBytes(3).toString('hex') + '.jpg';
-
-  fs.writeFileSync(path.join(folder, name), file);
-
-  res.json({ path: 'images/' + name });
-});
-
-// ---------- packages ----------
-function packageError(b) {
-  if (!b.name || !b.name.trim() || !b.destination || !b.destination.trim()) {
-    return 'Name and destination are required';
-  }
-
-  if (!(parseInt(b.days) > 0) || !(parseInt(b.price) > 0)) {
-    return 'Days and price must be positive numbers';
-  }
-
-  return '';
+    return {
+        values: {
+            title,
+            destinationId,
+            category: String(body.category || "Nature").trim(),
+            days,
+            nights: Math.max(0, days - 1),
+            price,
+            description: String(body.description || "").trim(),
+            highlights: String(body.highlights || "").trim(),
+            image,
+            featured: body.featured === true || body.featured === "true"
+        }
+    };
 }
 
-async function packageValues(b) {
-  const destination = await db.query(
-    'SELECT id FROM destinations WHERE LOWER(name) = LOWER($1)',
-    [b.destination.trim()]
-  );
+async function savePackage(body, id) {
+    const checked = validatePackage(body);
+    if (checked.error) return { error: checked.error };
+    const p = checked.values;
 
-  if (destination.rows.length === 0) return null;
-
-  const days = parseInt(b.days);
-  const nights = days - 1;
-
-  let image = String(b.image || '').trim();
-
-  if (!image.startsWith('images/') || image.includes('..')) {
-    image = 'images/taj-mahal.jpg';
-  }
-
-  const featured = b.featured === true ||
-                   b.featured === 'true' ||
-                   b.featured === 1;
-
-  return [
-    b.name.trim(),
-    destination.rows[0].id,
-    b.category || 'Nature',
-    days,
-    nights,
-    parseInt(b.price),
-    (b.description || '').trim(),
-    (b.highlights || '').trim(),
-    image,
-    featured,
-    days + ' Days / ' + nights + ' Nights'
-  ];
-}
-
-router.post('/packages', requireAdmin, async (req, res) => {
-  try {
-    const error = packageError(req.body);
-    if (error) return res.status(400).json({ error });
-
-    const values = await packageValues(req.body);
-
-    if (!values) {
-      return res.status(400).json({ error: 'Destination not found' });
-    }
-
-    const result = await db.query(
-      `INSERT INTO packages
-       (title, destination_id, category, days, nights, price,
-        description, highlights, image, featured, duration)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-       RETURNING id`,
-      values
+    const destination = await db.query(
+        "SELECT id, image FROM destinations WHERE id = $1",
+        [p.destinationId]
     );
+    if (destination.rows.length === 0) return { error: "Selected destination was not found." };
 
-    res.status(201).json({ id: result.rows[0].id });
+    const image = p.image || destination.rows[0].image || "/images/taj-mahal.jpg";
+    const duration = `${p.days} Days / ${p.nights} Nights`;
+    const values = [p.title, p.destinationId, p.category || "Nature", p.days,
+        p.nights, p.price, duration, p.description, p.highlights, image, p.featured];
 
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ error: 'Could not add package' });
-  }
-});
-
-router.put('/packages/:id', requireAdmin, async (req, res) => {
-  try {
-    const error = packageError(req.body);
-    if (error) return res.status(400).json({ error });
-
-    const values = await packageValues(req.body);
-
-    if (!values) {
-      return res.status(400).json({ error: 'Destination not found' });
+    if (id) {
+        const result = await db.query(`
+            UPDATE packages SET
+                title = $1, destination_id = $2, category = $3, days = $4,
+                nights = $5, price = $6, duration = $7, description = $8,
+                highlights = $9, image = $10, featured = $11
+            WHERE id = $12 RETURNING id
+        `, [...values, id]);
+        return result.rowCount ? { id: result.rows[0].id } : { error: "Package not found." };
     }
 
-    const result = await db.query(
-      `UPDATE packages SET
-       title = $1, destination_id = $2, category = $3, days = $4,
-       nights = $5, price = $6, description = $7, highlights = $8,
-       image = $9, featured = $10, duration = $11
-       WHERE id = $12`,
-      [...values, req.params.id]
-    );
-
-    if (result.rowCount === 0) {
-      return res.status(404).json({ error: 'Package not found' });
-    }
-
-    res.json({ success: true });
-
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ error: 'Could not update package' });
-  }
-});
-
-router.delete('/packages/:id', requireAdmin, async (req, res) => {
-  try {
-    const result = await db.query(
-      'DELETE FROM packages WHERE id = $1',
-      [req.params.id]
-    );
-
-    if (result.rowCount === 0) {
-      return res.status(404).json({ error: 'Package not found' });
-    }
-
-    res.json({ success: true });
-
-  } catch (error) {
-    res.status(500).json({
-      error: 'Could not delete package. It may be linked to an enquiry.'
-    });
-  }
-});
-
-// ---------- dashboard numbers + enquiries ----------
-router.get('/stats', requireAdmin, async (req, res) => {
-  try {
     const result = await db.query(`
-      SELECT
-        COUNT(*) AS total,
-        COALESCE(AVG(price), 0) AS avg,
-        COUNT(*) FILTER (WHERE featured = TRUE) AS featured
-      FROM packages
-    `);
+        INSERT INTO packages
+            (title, destination_id, category, days, nights, price, duration,
+             description, highlights, image, featured)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        RETURNING id
+    `, values);
+    return { id: result.rows[0].id };
+}
 
-    const bookings = await db.query(
-      'SELECT COUNT(*) AS c FROM enquiries'
-    );
-
-    const p = result.rows[0];
-
-    res.json({
-      total: Number(p.total),
-      avgPrice: Math.round(Number(p.avg)),
-      featured: Number(p.featured),
-      bookings: Number(bookings.rows[0].c)
-    });
-
-  } catch (error) {
-    res.status(500).json({ error: 'Could not get dashboard statistics' });
-  }
+router.post("/packages", requireAdmin, async (req, res) => {
+    try {
+        const result = await savePackage(req.body, null);
+        if (result.error) return res.status(400).json({ error: result.error });
+        res.status(201).json({ success: true, id: result.id });
+    } catch (error) {
+        console.error("Could not add package:", error);
+        res.status(500).json({ error: "Could not add package." });
+    }
 });
 
-// ---------- update enquiry status ----------
-router.put('/bookings/:id/status', requireAdmin, async (req, res) => {
-  try {
-    const status = req.body.status;
-
-    if (!['Pending', 'Contacted', 'Confirmed'].includes(status)) {
-      return res.status(400).json({ error: 'Invalid status' });
+router.put("/packages/:id", requireAdmin, async (req, res) => {
+    try {
+        const result = await savePackage(req.body, req.params.id);
+        if (result.error) return res.status(400).json({ error: result.error });
+        res.json({ success: true, id: result.id });
+    } catch (error) {
+        console.error("Could not update package:", error);
+        res.status(500).json({ error: "Could not update package." });
     }
-
-    const result = await db.query(
-      'UPDATE enquiries SET status = $1 WHERE id = $2',
-      [status, req.params.id]
-    );
-
-    if (result.rowCount === 0) {
-      return res.status(404).json({ error: 'Enquiry not found' });
-    }
-
-    res.json({ success: true });
-
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ error: 'Could not update enquiry status' });
-  }
 });
 
-
-router.get('/bookings', requireAdmin, async (req, res) => {
-  try {
-    const result = await db.query(`
-      SELECT
-        enquiries.id,
-        enquiries.name,
-        enquiries.email,
-        enquiries.phone,
-        destinations.name AS destination,
-        packages.title AS package,
-        enquiries.travel_date,
-        enquiries.travellers,
-        enquiries.budget,
-        enquiries.status,
-        enquiries.created_at
-      FROM enquiries
-      JOIN destinations
-        ON enquiries.destination_id = destinations.id
-      LEFT JOIN packages
-        ON enquiries.package_id = packages.id
-      ORDER BY enquiries.id DESC
-    `);
-
-    res.json(result.rows);
-
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ error: 'Could not get enquiries' });
-  }
+router.delete("/packages/:id", requireAdmin, async (req, res) => {
+    try {
+        const result = await db.query(
+            "DELETE FROM packages WHERE id = $1 RETURNING id",
+            [req.params.id]
+        );
+        if (result.rowCount === 0) return res.status(404).json({ error: "Package not found." });
+        res.json({ success: true });
+    } catch (error) {
+        // If an old database has a restrictive foreign key, keep the package
+        // rather than deleting enquiry history.
+        res.status(409).json({ error: "This package is linked to an enquiry, so it cannot be deleted." });
+    }
 });
 
 module.exports = router;

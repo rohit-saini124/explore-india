@@ -1,0 +1,29 @@
+{
+  "name": "explore-india",
+  "version": "1.0.0",
+  "description": "**A Travel Discovery & Booking Enquiry Management System**",
+  "main": "database.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rohit-saini124/explore-india.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/rohit-saini124/explore-india/issues"
+  },
+  "homepage": "https://github.com/rohit-saini124/explore-india#readme",
+  "dependencies": {
+    "better-sqlite3": "^13.1.1",
+    "dotenv": "^18.0.10",
+    "express": "^5.3.0",
+    "mysql2": "^3.24.6",
+    "pg": "^8.23.1"
+  }
+}

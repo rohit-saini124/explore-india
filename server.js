@@ -1,57 +1,56 @@
-// Import Express
+
+require("dotenv").config();
+
 const express = require("express");
+const session = require("express-session");
 
 const destinationsRoutes = require("./routes/destinations");
 const packagesRoutes = require("./routes/packages");
 const bookingRoutes = require("./routes/booking");
-// Create an Express application
-const app = express();
+const adminRoutes = require("./routes/admin");
 
-// Define the port number
+const app = express();
 const PORT = 3000;
 
-app.use(function(req, res, next) {
+// Middleware to read JSON data
+app.use(express.json({ limit: "10mb" }));
+// Middleware to manage admin login sessions
+app.use(session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        httpOnly: true,
+        maxAge: 8 * 60 * 60 * 1000
+    }
+}));
 
-    console.log(`A request has arrived! with method: ${req.method} and PORT: ${PORT}`);
-
-    next();
-
-});
-
-// Serve frontend files from the public folder
+// Serve frontend files
 app.use(express.static("public"));
-app.use(express.json()); // middleware to help reading json request bodies in post requests
 
-//route registering
+// Register API routes
 app.use("/api/destinations", destinationsRoutes);
 app.use("/api/packages", packagesRoutes);
 app.use("/api/booking", bookingRoutes);
+app.use("/api/admin", adminRoutes);
 
-// First API route
+// Test route
 app.get("/api/test", function(req, res) {
-
     res.send("Explore India backend is working!");
-
 });
 
-
+// Project information
 app.get("/api/info", function(req, res) {
-
-    const projectInfo = {
+    res.json({
         name: "Explore India",
         type: "Travel Discovery Website",
         backend: "Node.js and Express",
-        database: "SQLite",
+        database: "Supabase PostgreSQL",
         success: true
-    };
-
-    res.json(projectInfo);
-
+    });
 });
-
 
 // Start the server
 app.listen(PORT, function() {
     console.log(`Server is running at http://localhost:${PORT}`);
 });
-

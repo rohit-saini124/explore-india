@@ -131,3 +131,15 @@ The project uses PostgreSQL and contains the following main tables:
 - **enquiries:** Stores the enquiries submitted by users.
 - **admins:** Stores admin login details.
 
+  ## Team Contributions
+
+The project was developed by a team of three members. Each member worked on different modules of website.
+
+| Team Member | Contributions |
+|---|---|
+| [Rohit](https://github.com/rohit-saini124) | Home page, Booking Enquiry module and integration of frontend with backend and database. |
+| [Dishank Verma](https://github.com/Dishankverma) | Destinations module, including destination display, search, filters and related things. |
+| [B Niteesh](https://github.com/niteesh-nayak) | Travel Packages module and Admin module, including package management and enquiry management. |
+
+All team members contributed to developing their respective modules.
+

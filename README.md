@@ -1,95 +1,133 @@
 # Explore India
 
-A simple **Travel Discovery and Booking Enquiry Management System** built for a college project.
+Explore India is a simple travel website developed as a college project. It helps users explore different destinations in India, view travel packages and submit booking enquiries.
+
+This project is built using HTML, CSS, JavaScript, Node.js, Express and PostgreSQL.
 
 ## Features
 
-- Home page with popular destinations and project information.
-- Destinations page with search, category filters and image browsing.
-- Packages page with search, category filters, sorting and package details.
-- Booking enquiry form that saves enquiries in PostgreSQL.
-- Admin login.
-- Admin dashboard to view enquiries, update their status and add/edit/delete packages.
+- **Home Page:** Displays popular destinations and information about the website.
+- **Destinations:** Allows users to explore destinations and search for places.
+- **Travel Packages:** Displays available packages with search, filters and sorting options.
+- **Booking Enquiry:** Allows users to submit their travel details through an enquiry form.
+- **Admin Login:** Provides login access for the admin.
+- **Admin Dashboard:** Allows the admin to view enquiries, update their status and manage travel packages.
 
-This is an enquiry system, not a payment or real-time reservation system.
+*Note: This website is only for submitting travel enquiries. It does not provide online payments or confirmed reservations.*
 
-## Technology
+## Technologies Used
 
-- HTML, CSS and JavaScript
-- Node.js and Express
+- HTML
+- CSS
+- JavaScript
+- Node.js
+- Express.js
 - PostgreSQL
-- `pg` package for database connection
-- Express Session for admin login
 
-## Setup
+## How to Run the Project
 
-### 1. Install Node.js and PostgreSQL
+Follow these steps to run the project on your computer.
 
-Make sure Node.js, npm and PostgreSQL are installed, or create a PostgreSQL database with a hosted provider such as Supabase.
+### Step 1: Install the Required Software
 
-### 2. Create the database
+Make sure you have installed:
 
-Create a database named `explore_india` in PostgreSQL. For example, in pgAdmin's Query Tool:
+- [Node.js]
+- [PostgreSQL]
+
+You can use pgAdmin to manage your PostgreSQL database.
+
+### Step 2: Create the Database
+
+Open pgAdmin and create a new database named:
+
+`explore_india`
+
+You can also create it using this SQL command:
 
 ```sql
 CREATE DATABASE explore_india;
 ```
 
-### 3. Configure environment variables
+### Step 3: Configure the Environment File
 
-Copy `.env.example` and name the copy `.env`.
+In the main project folder, find the `.env.example` file.
 
-Set `DATABASE_URL` to your PostgreSQL connection string and set your own `SESSION_SECRET`, `ADMIN_USERNAME` and `ADMIN_PASSWORD`. For Supabase or another hosted provider that requires SSL, set `PGSSL=true`; keep `PGSSL=false` for a normal local PostgreSQL installation.
+Make a copy of it and rename the copy to `.env`.
 
-Example local connection string:
+Open `.env` and enter your PostgreSQL connection details, admin username and password.
 
-```text
-postgresql://postgres:YOUR_PASSWORD@localhost:5432/explore_india
+For example:
+
+```env
+DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@localhost:5432/explore_india
+
+PGSSL=false
+
+SESSION_SECRET=your_secret_key
+
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=your_admin_password
 ```
 
-Do not upload `.env` to GitHub.
+Replace `YOUR_PASSWORD` with your PostgreSQL password.
 
-### 4. Install project packages
+Keep `.env` private. Do not upload it to GitHub.
 
-Run this command in the project folder:
+### Step 4: Install Project Dependencies
+
+Open the terminal in the main project folder and run:
 
 ```bash
 npm install
 ```
 
-### 5. Create tables and sample data
+This installs the packages required to run the project.
+
+### Step 5: Set Up the Database
+
+Run:
 
 ```bash
 npm run init-db
 ```
 
-This creates the tables and adds 20 sample destinations and packages. It does not delete existing enquiries. Existing sample packages with the same names are updated rather than duplicated.
+This command creates the required database tables and adds sample destinations and travel packages.
 
-The admin user is created from the `ADMIN_USERNAME` and `ADMIN_PASSWORD` values in `.env` if that username does not already exist. The simple session setup is intended for this college project/demo; it is not a production-grade multi-server session store.
+It also creates the admin account if it does not already exist.
 
-### 6. Start the website
+### Step 6: Start the Website
+
+Run the following command:
 
 ```bash
 npm start
 ```
 
-Open:
+Once the server starts, open your browser and visit:
 
 ```text
 http://localhost:3000
 ```
 
-Do not open the HTML files directly from File Explorer. Use the Express server so the API and database connection work.
+The website should now be running.
 
-## Admin
+## Admin Login
 
-Open `http://localhost:3000/admin-login.html` and use the username and password configured in `.env` when the admin account was first created.
+To open the admin login page, visit:
 
-## Main database tables
+```text
+http://localhost:3000/admin-login.html
+```
 
-- `destinations`: places users can explore.
-- `packages`: packages linked to a destination through `destination_id`.
-- `enquiries`: enquiries submitted through the booking form.
-- `admins`: admin usernames and password hashes.
+Use the admin username and password configured in the `.env` file when the admin account was created.
 
-The booking API checks that a selected package belongs to the selected destination before saving the enquiry.
+## Database Tables
+
+The project uses PostgreSQL and contains the following main tables:
+
+- **destinations:** Stores information about travel destinations.
+- **packages:** Stores travel packages linked to destinations.
+- **enquiries:** Stores the enquiries submitted by users.
+- **admins:** Stores admin login details.
+
